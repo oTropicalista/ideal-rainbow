@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import NoteDataService from "../services/note.service";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
+import Editor from "./note-editor.component";
+import SunEditor, { buttonList } from 'suneditor-react';
+import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
 
 export default class NoteList extends Component {
     constructor(props) {
@@ -11,17 +14,78 @@ export default class NoteList extends Component {
         this.setActiveNote = this.setActiveNote.bind(this);
         this.removedAllNotes = this.removedAllNotes.bind(this);
         this.searchTitle = this.searchTitle.bind(this);
+        this.onChangeTitle = this.onChangeTitle.bind(this);
+        this.onChangeContent = this.onChangeContent.bind(this);
+        this.saveNote = this.saveNote.bind(this);
+        this.newNote = this.newNote.bind(this);
 
         this.state = {
             notes: [],
             currentNote: null,
             currentIndex: -1,
-            searchTitle: ""
+            searchTitle: "",
+            existe: false,
+
+            id: null,
+            titulo: "",
+            conteudo: "",
+            concluido: false,
+
+            submitted: false,
+
+            enableBar: true,
         };
     }
 
     componentDidMount() {
         this.retrieveNotes();
+    }
+
+    onChangeTitle(e) {
+        this.setState({
+            titulo: e.target.value
+        });
+    }
+
+    onChangeContent(e) {
+        this.setState({
+            conteudo: e
+        });
+        console.log("onChangeContent\n" + e);
+    }
+
+    saveNote() {
+        var data = {
+            titulo: this.state.titulo,
+            conteudo: this.state.conteudo
+        };
+
+        NoteDataService.create(data)
+            .then(response => {
+                this.setState({
+                    id: response.data.id,
+                    titulo: response.data.titulo,
+                    conteudo: response.data.conteudo,
+                    concluido: response.data.concluido,
+
+                    submitted: true
+                });
+                console.log("response.data:\n" + response.data);
+            })
+            .catch(e => {
+                console.log(e);
+            });
+    }
+
+    newNote() {
+        this.setState({
+            id: null,
+            titulo: "",
+            conteudo: "",
+            concluido: false,
+
+            submitted: false
+        });
     }
 
     onChangeSearchTitle(e) {
@@ -57,6 +121,7 @@ export default class NoteList extends Component {
 
     setActiveNote(note, index) {
         this.setState({
+            existe: true,
             currentNote: note,
             currentIndex: index
         });
@@ -86,8 +151,14 @@ export default class NoteList extends Component {
         });
     }
 
+    handleToolBarOptionChange = changeEvent => {
+        this.setState({
+            selectedOption: changeEvent.target.value
+        });
+}
+
     render() {
-        const { searchTitle, notes, currentNote, currentIndex } = this.state;
+        const { searchTitle, notes, currentNote, currentIndex, existe } = this.state;
 
         return (
             <div className="list row">
@@ -118,7 +189,7 @@ export default class NoteList extends Component {
                             <li
                                 className={
                                     "list-group-item" +
-                                    (index === currentIndex ? "active" : "")
+                                    (index === currentIndex ? "" : "")
                                 }
                                 onClick={() => this.setActiveNote(note, index)}
                                 key={index}
@@ -138,32 +209,23 @@ export default class NoteList extends Component {
                 <div className="col-md-8">
                     {currentNote ? (
                         <div>
-                            <h4>Nota</h4>
-                            <div>
-                                <label><b>Titulo: </b></label>{" "}
-                                {currentNote.titulo}
-                            </div>
-                            <div>
-                                <label><b>Nota: </b></label>{" "}
-                                {currentNote.conteudo}
-                            </div>
-                            <div>
-                                <label><b>Status:</b></label>{" "}
-                                {currentNote.concluido ? "Concluida" : "Pendente"}
-                            </div>
+                            
+                            <Editor
+                                currentNote={currentNote}
+                                exite={existe}
+                            />
 
-                            <Link
-                                to={"/notes" + currentNote.id}
-                                className="badge badge-warning"
-                            >
-                                Editar
-                            </Link>
+                            <button onClick={this.saveNote} className="btn btn-sucess">Submit</button>
                         </div>
                     ) : (
-                        <div>
-                            <br />
-                            <p>Clique numa nota</p>
-                        </div>
+                            <div>
+                                <Editor
+                                    currentNote={""}
+                                    existe={existe}
+                                />
+
+                                <button onClick={this.saveNote} className="btn btn-sucess">Submit</button>
+                            </div>
                     )}
                 </div>
             </div>

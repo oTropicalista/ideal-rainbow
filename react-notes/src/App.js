@@ -8,6 +8,7 @@ import './App.css';
 import AddNote from "./components/add-note.component";
 import Note from "./components/note.component";
 import NotesList from "./components/notes-list.component";
+// import NoteEditor from "./components/note-editor.component";
 
 class App extends Component {
   render() {
